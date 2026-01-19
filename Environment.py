@@ -1,4 +1,5 @@
-from entity import Individual, Oasis, Position
+from entity import Individual, Oasis, Position, Organism
+from evolution import step_evolution
 from typing import List 
 from dotenv import load_dotenv
 import random
@@ -12,6 +13,7 @@ SCREEN_WIDTH = int(os.getenv('SCREEN_WIDTH'))
 SCREEN_HEIGHT = int(os.getenv('SCREEN_HEIGHT'))
 POPULATION_SIZE = int(os.getenv("POPULATION_SIZE"))
 WATER_SOURCE = int(os.getenv('WATER_SOURCE'))
+EVOLUTION_RATE = int(os.getenv('EVOLUTION_RATE'))
 
 TIME = 0
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -50,18 +52,30 @@ class Environment:
     
     def step(self):
         """ evolve the environment """
+        global TIME
+
+        if TIME == EVOLUTION_RATE:
+            #print("step_evolution is called !!")
+            TIME %= EVOLUTION_RATE
+            new_population = step_evolution(self.population, self.resources, Organism)
+            self.population = []
+            for individual in new_population:
+                individual.position = self.create_position()
+            self.population = new_population
+            assert(len(self.population) == POPULATION_SIZE)
+
         individual_positions = [individual.position for individual in self.population]
         resources_positions = [resource.position for resource in self.resources]
         
         for individual in self.population:
             other_positions = [pos for pos in individual_positions if pos != individual.position]
             input_data = [coord for pos in other_positions for coord in [pos.pos_x, pos.pos_y]]
-            input_data = [self.height, self.width] + [coord for pos in resources_positions for coord in [pos.pos_x, pos.pos_y]] + input_data
+            input_data = [self.height, self.width] + [coord for pos in resources_positions for coord in [pos.pos_x, pos.pos_y]] + [individual.position.pos_x, individual.position.pos_y] + input_data
             input_data = torch.tensor(input_data, dtype=float, device=device)
-            #assert(input_data.shape == F_IN)
-            #print("input_data.shape : ", input_data.shape)
-            #print("F_IN : ", F_IN)
+            
             tmp = F_IN - input_data.shape[0]
+            #assert(tmp == 0)
+            
             input_data = torch.cat([input_data, torch.zeros(tmp, dtype=float, device=device)])
             action = individual.take_action(input_data)
             
@@ -76,6 +90,8 @@ class Environment:
                     individual.position.pos_x = max(individual.position.pos_x - 1, 0)
                 case _:
                     pass 
+        TIME += 1
+        
 
         
         

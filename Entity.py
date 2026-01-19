@@ -22,7 +22,7 @@ class Position:
         self.pos_y = pos_y
     
     def __repr__(self):
-        out = f"Position(x={self.pos_x}, y={self.pos_y})"
+        out = f"Position(x={self.pos_x if self.pos_x is not None else -1}, y={self.pos_y if self.pos_y is not None else -1})"
         return out
 
 
@@ -48,6 +48,7 @@ class Individual(ABC):
     
 
 F_IN = (WATER_SOURCE + POPULATION_SIZE + 1) * 2
+# +1 for the env dimensions
 
 class Brain(nn.Module): 
     """ The brain of the organism (the genome) """
@@ -82,7 +83,7 @@ class Organism(Individual):
         """Convert all parameters of the model into a flat vector"""
         params = []
         for param in self.genome.parameters():
-            params.append(param.data.view(-1))  # flatten each tensor
+            params.append(param.data.view(-1))  
         params = torch.cat(params)
         return params
     
