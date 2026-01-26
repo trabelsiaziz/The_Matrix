@@ -71,9 +71,8 @@ class Brain(nn.Module):
 
 class Organism(Individual): 
     
-    def __init__(self, position: Position = None):
-        super().__init__(Brain())
-        self.position = position
+    def __init__(self, position: Position = None, individual_type: Type[T] = Brain):
+        super().__init__(individual_type(), position)
     
     def __repr__(self):
         out = f"organism(x={self.position.pos_x if self.position is not None else -1}, y={self.position.pos_y if self.position is not None else -1})"

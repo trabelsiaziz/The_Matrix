@@ -4,8 +4,10 @@ import pygame
 
 
 class Simulation: 
+
     def __init__(self, environment: Environment):
         self.environment = environment
+        self.gen_count = 0
     
     def __repr__(self):
         out = f"Simulation(environment={self.environment})"
@@ -26,15 +28,25 @@ class Simulation:
                     
             screen.fill("yellow")
             
-            for individual in self.environment.population:
-                individual_position = pygame.Vector2(individual.position.pos_x, individual.position.pos_y)
-                pygame.draw.circle(screen, "brown", individual_position, 20)
+            # Display generation count
+            font = pygame.font.Font(None, 36)
+            text = font.render(f"Generation: {self.gen_count}", True, "black")
+            screen.blit(text, (10, 10))
             
-            for resource in self.environment.resources:
+            for individual in self.environment.evolution.population:
+                individual_position = pygame.Vector2(individual.individual.position.pos_x, individual.individual.position.pos_y)
+                if individual == self.environment.evolution.best_individual:
+                    pygame.draw.circle(screen, "green", individual_position, 20)
+                else:
+                    pygame.draw.circle(screen, "brown", individual_position, 20)
+            
+            for resource in self.environment.evolution.resources:
                 resource_position = pygame.Vector2(resource.position.pos_x, resource.position.pos_y)
                 pygame.draw.circle(screen, "blue", resource_position, 20)
             
-            self.environment.step()     
+            update = self.environment.step()  
+            if update:
+                self.gen_count += 1   
 
 
             pygame.display.flip()
